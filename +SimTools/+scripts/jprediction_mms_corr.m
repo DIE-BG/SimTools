@@ -114,7 +114,7 @@ if params.SaveFullData
     dat_temp = dboverlay( ...
         MODEL.F_pred*get(MODEL.M, 'xlist'), ...
         MODEL.data_mr);
-    databank.toCSV(dat_temp, fullfile('data', 'fulldata', MODEL.FULLDATANAME), Inf);
+    databank.toCSV(dat_temp, fullfile(MODEL.FULLDATANAME_ACT), Inf);
 end
 
 

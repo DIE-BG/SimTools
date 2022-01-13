@@ -38,6 +38,7 @@ function plot_impulse_response(MODEL, varargin)
  p = inputParser;
     addParameter(p, 'SavePath', fullfile(userpath, 'temp'));
     addParameter(p, 'ShockName', get(MODEL.M, 'elist'));
+    addParameter(p, 'FontSize', 12);
 parse(p, varargin{:});
 params = p.Results; 
 
@@ -73,7 +74,7 @@ for shock = 1:length(temp_sname)
     figure;
     
     set(gcf, ...
-        'defaultaxesfontsize', 12, ...
+        'defaultaxesfontsize', params.FontSize, ...
         'Position', [1 42.0182 1.6756e+03 825.6000]);
   
     for x_i = 1:length(xlist)
@@ -85,12 +86,14 @@ for shock = 1:length(temp_sname)
             '.-b');
     
         grid on
+
+         highlight(-3:0);
     
         title(xlist{x_i}, ...
             'interpreter', 'none');
     
         ylabel('Porcentaje', ...
-            'Fontsize', 11);
+            'Fontsize', params.FontSize);
 
         ytickformat('%0.3f')
     end

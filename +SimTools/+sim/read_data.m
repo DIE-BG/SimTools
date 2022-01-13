@@ -44,7 +44,7 @@ data_mr = structfun(@(var) resize(var,MODEL.DATES.hist_start:MODEL.DATES.hist_en
 
 % Asignación de datos para variables en ecuaciones de medida
 ylist = get(MODEL.M,'ylist');                                         
-ylist_obs = cellfun(@(x) regexp(x, '(?<=m_)(\D*)$', 'tokens', 'once'), ...
+ylist_obs = cellfun(@(x) regexp(x, '(?<=m_)(\S*)$', 'tokens', 'once'), ...
     ylist);
 
 for i = 1:length(ylist)
