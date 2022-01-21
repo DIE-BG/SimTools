@@ -1,4 +1,4 @@
-function MODEL = impulse_response(MODEL)
+function MODEL = impulse_response(MODEL, varargin)
 
 % impulse_response realiza el cálculo de los impulso respuesta dado choques
 % de 1 unidad en las variables de choques especificadas en el modelo.
@@ -32,14 +32,20 @@ function MODEL = impulse_response(MODEL)
 % -Octubre 2021
 
 % Definición de períodos de simulación
+
+p = inputParser;
+    addParameter(p, 'FromSState', true);
+parse(p, varargin{:});
+params = p.Results; 
+
 startSim = 1;
 endSim = MODEL.DATES.pred_end - MODEL.DATES.pred_start;
 
 temp_sname = get(MODEL.M, 'elist');
 
 %Base de datos con estados estacionarios del modelo original (g)
-SIM = sstatedb(MODEL.M, startSim-4:endSim);
 
+SIM = sstatedb(MODEL.M, startSim-4:endSim);
 
     for shock = 1:length(temp_sname)
         % Inicializamos la estructura de datos para la simulación.
@@ -58,13 +64,23 @@ SIM = sstatedb(MODEL.M, startSim-4:endSim);
         % Desechamos las variables temporales y nos quedamos con aquella
         % que contiene los resultados combinados.
         IMPULSE_RESPONSE.(temp_sname{shock}) = IMPULSE_RESPONSE.(temp_sname{shock}).sim_r;
-
+        if ~params.FromSState
+            IMPULSE_RESPONSE.(temp_sname{shock}) = cell2struct(...
+                cellfun(...
+                    @(x) IMPULSE_RESPONSE.(temp_sname{shock}).(x) - SIM.(x), ...
+                    get(MODEL.M, 'xlist'), ...
+                    'UniformOutput', false ...
+                ), ...
+                get(MODEL.M, 'xlist'), ...
+                2 ...
+            );
+        end
         % Corregir problemas de aproximación.
         IMPULSE_RESPONSE.(temp_sname{shock}) = structfun( ...
             @(x) round(x, 8), ...
             IMPULSE_RESPONSE.(temp_sname{shock}), ...
             'UniformOutput', false ...
-        );   
+        );
     end
 
 MODEL.impulse_response = IMPULSE_RESPONSE;
