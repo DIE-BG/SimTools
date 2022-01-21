@@ -45,6 +45,7 @@ p = inputParser;
     addParameter(p, 'PredRange', MODEL.DATES.pred_start:MODEL.DATES.pred_end);
     addParameter(p, 'NoShocksVar', {});
     addParameter(p, 'SaveFullData', false);
+    addParameter(p, 'CoerceObs', true);
 parse(p, varargin{:});
 params = p.Results; 
 
@@ -117,6 +118,9 @@ if params.SaveFullData
     databank.toCSV(dat_temp, fullfile(MODEL.FULLDATANAME_ACT), Inf);
 end
 
+if params.CoerceObs
+    MODEL.F_pred = dat_temp;
+end
 
 end
 
