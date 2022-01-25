@@ -56,6 +56,7 @@ p = inputParser;
     addParameter(p, 'LegendsNames', {});
     addParameter(p, 'PlotSSLine', true);
     addParameter(p, 'PlotAnnotations', true);
+    addParameter(p, 'EndDatePlot', {});
 parse(p, varargin{:});
 params = p.Results;
 
@@ -82,7 +83,16 @@ MODEL.F_pred.r.Data(1:length(MODEL.data_mr.r.Data)) = MODEL.data_mr.r.Data;
 
 % ----- Inicialización de las iteraciones -----
 
+
+if ~isempty(params.EndDatePlot)
+    full_data_ant = dbclip(full_data_ant, params.StartDate:params.EndDatePlot);
+    MODEL.F_pred = dbclip(MODEL.F_pred, params.StartDate:params.EndDatePlot);
+    MODEL.DATES.pred_end = params.EndDatePlot;
+end
+
 list = params.PlotList;
+list = list(cellfun(@(x) any(strcmp(x, fieldnames(full_data_ant))), list));
+
 
 for var = 1 : length(list)
 
@@ -128,7 +138,7 @@ for var = 1 : length(list)
         set(gca, 'Children',flipud(chi));
 
         if ~isempty(params.LegendsNames)
-            legend(params.LegendsNames);
+            legend(params.LegendsNames, 'Location', 'southwest');
         end
     end
 
