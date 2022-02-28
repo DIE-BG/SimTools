@@ -115,6 +115,7 @@ if params.SaveFullData
     dat_temp = dboverlay( ...
         MODEL.F_pred*get(MODEL.M, 'xlist'), ...
         MODEL.data_mr);
+    dat_temp = structfun(@(x) round(x, 8), dat_temp, 'UniformOutput', false);
     databank.toCSV(dat_temp, fullfile(MODEL.FULLDATANAME_ACT), Inf);
 end
 
