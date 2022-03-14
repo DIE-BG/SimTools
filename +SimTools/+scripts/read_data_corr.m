@@ -47,7 +47,16 @@ params = p.Results;
 
 % Lectura del archivo de datos. -------------------------------------------
 
-data = databank.fromCSV(MODEL.data_file_name);
+if strcmp(...
+    regexp(MODEL.data_file_name, '\.(\S*)$', 'tokens', 'once'), ...
+    'mat' ...
+)
+    data = load(MODEL.data_file_name);
+    data_names_temp = fieldnames(data);
+    data = data.(data_names_temp{1});
+else
+    data = databank.fromCSV(MODEL.data_file_name);
+end
 
 if isempty(params.HistStart)
 hist_start = max( ...
