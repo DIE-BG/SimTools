@@ -120,7 +120,9 @@ if params.SaveFullData
 end
 
 if params.CoerceObs
-    MODEL.F_pred = dat_temp;
+    MODEL.F_pred = structfun(@(x) round(x, 8), ...
+        dboverlay(MODEL.F_pred, MODEL.data_mr), ...
+        'UniformOutput', false);
 end
 
 end
