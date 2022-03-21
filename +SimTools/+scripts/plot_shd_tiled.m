@@ -38,13 +38,29 @@ function plot_shd_tiled(MODEL, varargin)
 % -DIE
 % -Octubre 2021
 
+%{ 
+% ----- TEST SECTION -----
+params = struct;
+params.Variables = get(MODEL.MF, 'elist');
+params.CloseAll = true;
+params.SavePath = fullfile( ...
+                    cd, ...
+                    'plots', ...
+                    'corrimiento', ...
+                    MODEL.CORR_DATE, ...
+                    MODEL.CORR_VER, ...
+                    'structural_shocks' ...
+                );
+params.OnlyHist = false;
+%}
+
 % Parametros opcionales
  p = inputParser;
     addParameter(p, 'SavePath', fullfile(userpath, 'temp'));
     addParameter(p, 'Variables', get(MODEL.MF, 'elist'));
     addParameter(p, 'CloseAll', true);
     addParameter(p, 'OnlyHist', false);
-parse(p, varargin{:});
+    parse(p, varargin{:});
 params = p.Results; 
 
 % Verificación y creación del directorio para las gráficas
