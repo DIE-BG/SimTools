@@ -38,6 +38,7 @@ function MODEL = shd_dsc(MODEL, varargin)
 % Parametros opcionales
  p = inputParser;
     addParameter(p, 'Pred', true);
+    addParameter(p, 'EndDate', MODEL.DATES.pred_end)
 parse(p, varargin{:});
 params = p.Results; 
 
