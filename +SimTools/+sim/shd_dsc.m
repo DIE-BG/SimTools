@@ -72,5 +72,5 @@ SHD = simulate(MODEL.MF, MODEL.F_pred,shdRange, ...
 [G,] = eval(GR,SHD);                                                                                                                                 % Evaluate contributions                                                                              
 
 MODEL.shd_dsc = G;
-
+MODEL.shd_dsc = structfun(@(x) round(x, 8), MODEL.shd_dsc, 'UniformOutput', false);
 end
