@@ -25,6 +25,14 @@ function plot_shd_tiled(MODEL, varargin)
 % * CloseAll = [ `true`|false ] - Nombre de variable a
 % graficar.
 %
+% * OnlyHist = [ true|`false` ] - Se grafica solamente la historia.
+%
+% * MeasurementShocks = [ true|`false` ] - Graficar los choques a las
+% variables de medida.
+%
+% * exoShocks = [ true|`false` ] - Graficar los choques a las variables
+% exógenas.
+%
 % ## Output Arguments ##
 %
 %
@@ -52,6 +60,8 @@ params.SavePath = fullfile( ...
                     'structural_shocks' ...
                 );
 params.OnlyHist = false;
+params.MeasurementShocks = false;
+params.ExoShocks = false;
 %}
 
 % Parametros opcionales
@@ -60,10 +70,12 @@ params.OnlyHist = false;
     addParameter(p, 'Variables', get(MODEL.MF, 'elist'));
     addParameter(p, 'CloseAll', true);
     addParameter(p, 'OnlyHist', false);
+    addParameter(p, 'MeasurementShocks', false);
+    addParameter(p, 'ExoShocks', false);
     parse(p, varargin{:});
 params = p.Results; 
 
-% Verificación y creación del directorio para las gráficas
+% ----- Verificación y creación del directorio para las gráficas ---
 if ~isfolder(params.SavePath)
     mkdir(params.SavePath)
 else
@@ -71,45 +83,74 @@ else
     mkdir(params.SavePath)
 end
 
+% --- Se recortan los datos a solamente la historia, si es que se requiere.
 if params.OnlyHist
-   MODEL.shd_dsc = dbclip(MODEL.shd_dsc, MODEL.DATES.hist_start:MODEL.DATES.hist_end);
-   MODEL.diff_shd_dsc = dbclip(MODEL.diff_shd_dsc, MODEL.DATES.hist_start:MODEL.DATES.hist_end);
-   MODEL.F_pred = dbclip(MODEL.F_pred, MODEL.DATES.hist_start:MODEL.DATES.hist_end);
+   MODEL.shd_dsc = dbclip( ...
+       MODEL.shd_dsc, ...
+       MODEL.DATES.hist_start:MODEL.DATES.hist_end ...
+   );
+
+   MODEL.diff_shd_dsc = dbclip( ...
+       MODEL.diff_shd_dsc, ...
+       MODEL.DATES.hist_start:MODEL.DATES.hist_end ...
+   );
+   
+   MODEL.F_pred = dbclip( ...
+       MODEL.F_pred, ...
+       MODEL.DATES.hist_start:MODEL.DATES.hist_end ...
+   );
 end
 
-% Variables a descomponer
-var_plot = params.Variables;
+% --- Filtrar las choches a las variables de medida. -----
 
-% Choques a las variables
+measurementShocks = regexp(get(MODEL.MF, 'elist')', 's_m_.*', 'match');
+measurementShocks = measurementShocks(cellfun(@(x) ~isempty(x), measurementShocks));
+measurementShocks = cellfun(@(x) x{1}, measurementShocks, 'UniformOutput', false);
 
-% Paleta de colores
-col = distinguishable_colors(length(var_plot) + 1, ...
+% --- Filtrar las choches a las variables de exógenas. -----
+
+exoShocks = regexp(get(MODEL.MF, 'elist')', '.*exo.*', 'match');
+exoShocks = exoShocks(cellfun(@(x) ~isempty(x), exoShocks));
+exoShocks = cellfun(@(x) x{1}, exoShocks, 'UniformOutput', false);
+
+
+% Se filtran la variables de medida del plot.
+if params.MeasurementShocks
+    var_plot = params.Variables;
+else
+    var_plot = params.Variables - measurementShocks;
+end
+
+% Se filtran las variables exogenas del plot.
+if ~params.ExoShocks
+    var_plot = var_plot - exoShocks;
+end
+
+% --- Paleta de colores ---
+col = SimTools.from_stack_exchange.distinguishable_colors( ...
+    length(var_plot) + 1, ...
     'b', ...
-    @(x) colorspace('RGB->Lab',x));
+    @(x) SimTools.from_stack_exchange.colorspace('RGB->Lab',x) ...
+);
 
 
 % ----- Obtener la fecha máxima de anclajes -----
-
 min_date = min(structfun(@(x) x.Range(1), MODEL.data_mr));
 max_date = max(structfun(@(x) x.Range(end), MODEL.data_mr));
 
 % ----- Recorte de choques estructurales al rango de fechas -----
-
 shd_trm = dbclip(MODEL.shd_dsc, min_date:max_date);
 
 % ----- Tamaño de la grilla -----
-
 grid_size_cols = 2;
 grid_size_rows = ceil(length(var_plot)/2);
 
 index = reshape(1:(grid_size_cols*grid_size_rows), grid_size_rows , grid_size_cols)';
 
 % ----- Gráfica -----
-
 figure('Position', [1 42.0182 1.6756e+03 825.6000]);
 
-tiled_plot = tiledlayout(grid_size_rows, grid_size_cols, ...
-    'Padding', 'tight');
+tiled_plot = tiledlayout(grid_size_rows, grid_size_cols);
 
 % El iterador i representa la variable a ser descompuesta
 for i = 1:length(var_plot)
@@ -151,7 +192,3 @@ if params.CloseAll
 end
 
 end
-
-% ----- TEST -----
-% params.Variables = get(MODEL.MF, 'elist');
-% i = 1;

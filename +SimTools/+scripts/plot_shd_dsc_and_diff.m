@@ -48,6 +48,9 @@ function plot_shd_dsc_and_diff(MODEL, varargin)
     addParameter(p, 'Variables', get(MODEL.MF, 'xlist'));
     addParameter(p, 'CloseAll', true);
     addParameter(p, 'OnlyHist', false);
+    addParameter(p, 'ExoVar', false);
+    addParameter(p, 'MeasurementShocks', false);
+    addParameter(p, 'ExoShocks', false);
 parse(p, varargin{:});
 params = p.Results; 
 
@@ -60,28 +63,91 @@ else
 end
 
 if params.OnlyHist
-   MODEL.shd_dsc = dbclip(MODEL.shd_dsc, MODEL.DATES.hist_start:MODEL.DATES.hist_end);
-   MODEL.diff_shd_dsc = dbclip(MODEL.diff_shd_dsc, MODEL.DATES.hist_start+1:MODEL.DATES.hist_end);
-   MODEL.F_pred = dbclip(MODEL.F_pred, MODEL.DATES.hist_start:MODEL.DATES.hist_end);
+   MODEL.shd_dsc = dbclip( ...
+       MODEL.shd_dsc, ...
+       MODEL.DATES.hist_start:MODEL.DATES.hist_end ...
+   );
+   MODEL.diff_shd_dsc = dbclip( ...
+       MODEL.diff_shd_dsc, ...
+       MODEL.DATES.hist_start+1:MODEL.DATES.hist_end ...
+   );
+   MODEL.F_pred = dbclip( ...
+       MODEL.F_pred, ...
+       MODEL.DATES.hist_start:MODEL.DATES.hist_end ...
+   );
 else
-   MODEL.shd_dsc = dbclip(MODEL.shd_dsc, MODEL.DATES.hist_start:MODEL.DATES.pred_end);
-   MODEL.diff_shd_dsc = dbclip(MODEL.diff_shd_dsc, MODEL.DATES.hist_start+1:MODEL.DATES.pred_end);
-   MODEL.F_pred = dbclip(MODEL.F_pred, MODEL.DATES.hist_start:MODEL.DATES.pred_end);
+   MODEL.shd_dsc = dbclip( ...
+       MODEL.shd_dsc, ...
+       MODEL.DATES.hist_start:MODEL.DATES.pred_end ...
+   );
+   MODEL.diff_shd_dsc = dbclip( ...
+       MODEL.diff_shd_dsc, ...
+       MODEL.DATES.hist_start+1:MODEL.DATES.pred_end ...
+   );
+   MODEL.F_pred = dbclip( ...
+       MODEL.F_pred, ...
+       MODEL.DATES.hist_start:MODEL.DATES.pred_end ...
+   );
 end
 
 
-% Variables a descomponer
+% --- Variables a descomponer ----
 var_plot = params.Variables;
 
+% Filtrar las choches a las variables de exógenas.
+
+exoVar = regexp(get(MODEL.MF, 'xlist')', '.*exo.*', 'match');
+exoVar = exoVar(cellfun(@(x) ~isempty(x), exoVar));
+exoVar = cellfun(@(x) x{1}, exoVar, 'UniformOutput', false);
+
+% Se filtran las variables exogenas del plot.
+if ~params.ExoVar
+    var_plot = var_plot - exoVar;
+end
+
+
+% --- Choques para descomponer a las variables ---
 % Choques a las variables
 var_shd = get(MODEL.MF, 'elist');
+var_shd_fiter = ones(length(var_shd), 1);
 
-% Paleta de colores
-col = distinguishable_colors(length(var_shd) + 1, ...
+% Filtrar las choches a las variables de medida.
+
+measurementShocks = regexp(get(MODEL.MF, 'elist')', 's_m_.*', 'match');
+measurementShocks_filter = cellfun(@(x) ~isempty(x), measurementShocks);
+measurementShocks = cellfun(@(x) x{1}, measurementShocks(measurementShocks_filter), 'UniformOutput', false);
+
+% Filtrar las choches a las variables de exógenas. 
+
+exoShocks = regexp(get(MODEL.MF, 'elist')', '.*exo.*', 'match');
+exoShocks_filter = cellfun(@(x) ~isempty(x), exoShocks);
+exoShocks = cellfun(@(x) x{1}, exoShocks(exoShocks_filter), 'UniformOutput', false);
+
+
+% Se filtran la variables de medida del plot.
+if ~params.MeasurementShocks
+    var_shd = var_shd - measurementShocks;
+    var_shd_fiter = var_shd_fiter - measurementShocks_filter;
+end
+
+% Se filtran las variables exogenas del plot.
+if ~params.ExoShocks
+    var_shd = var_shd - exoShocks;
+    var_shd_fiter = var_shd_fiter - exoShocks_filter;
+end
+
+% --- Se agregan las condiciones iniciales al problema de filtrar choques.
+
+var_shd_fiter(end + 1: end + 2) = 1;
+
+% --- Paleta de colores ---
+col = distinguishable_colors( ...
+    length(var_shd_fiter) + 1, ...
     'b', ...
-    @(x) colorspace('RGB->Lab',x));
+    @(x) colorspace('RGB->Lab',x) ...
+);
 
-% Estados estacionarios
+% --- Estados estacionarios ---
 MFSS = get(MODEL.M, 'sstate');
 
 % El iterador i representa la variable a ser descompuesta
@@ -106,7 +172,8 @@ for i = 1:length(var_plot)
     hold on
     
     % Barras
-    barcon(MODEL.shd_dsc.(var_plot{i}){:, 1:end}, ...
+
+    barcon(MODEL.shd_dsc.(var_plot{i}){:, logical(var_shd_fiter)}, ...
         'dateFormat=','YYFP', ...
         'colorMap=',col, ...
         'evenlySpread=', false); 
@@ -136,7 +203,7 @@ for i = 1:length(var_plot)
     hold on
     
     % Barras
-    barcon(MODEL.diff_shd_dsc.(var_plot{i}){:, 1:end}, ...
+    barcon(MODEL.diff_shd_dsc.(var_plot{i}){:, logical(var_shd_fiter)}, ...
         'dateFormat=','YYFP', ...
         'colorMap=',col, ...
         'evenlySpread=', false); 
