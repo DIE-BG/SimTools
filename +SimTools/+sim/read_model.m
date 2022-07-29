@@ -44,6 +44,7 @@ p = inputParser;
     addParameter(p, 'ParamAssignName', {});
     addParameter(p, 'ParamAssignValue', []);
     addParameter(p, 'ParamExtraAssign', {});
+    addParameter(p, 'AroundZero', false);
 parse(p, varargin{:});
 params = p.Results; 
 
@@ -56,7 +57,13 @@ end
 
 % Asignación de parámetros a la estructura `s`. ---------------------------
 
-run(MODEL.param_file_name);
+if params.AroundZero
+    run(MODEL.param_file_name_nm);
+    disp('Parametrización al rededor de cero.')
+else
+    run(MODEL.param_file_name);
+    disp('Parametrización al rededor de SS.')
+end
 
 % Reasignación de parámetros. ---------------------------------------------
 
