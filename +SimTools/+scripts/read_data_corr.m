@@ -41,7 +41,11 @@ function MODEL = read_data_corr(MODEL, varargin)
 
  p = inputParser;
     addParameter(p, 'FixedPredVar', {});
-    addParameter(p, 'HistStart', {})
+    addParameter(p, 'HistStart', {});
+    addParameter(p, 'EndoVar', {});
+    addParameter(p, 'EndEndoVar', {});
+    addParameter(p, 'AroundZero', false);
+    addParameter(p, 'OutSampleEval', false);
 parse(p, varargin{:});
 params = p.Results;
 
@@ -75,7 +79,23 @@ end_hist = structfun(@(x) str2dat(x), end_hist, 'UniformOutput',false);
 
 end_data = structfun(@(x) x.Range(end), data, 'UniformOutput', false);
 
+% Se agrega un filtro para las variables que no se anclarán.
+
+if ~isempty(params.EndoVar)
+    for i = 1:length(params.EndoVar)
+        end_hist.(params.EndoVar{i}) = params.EndEndoVar;
+        end_data.(params.EndoVar{i}) = params.EndEndoVar;
+    end
+end
+
 data_names = fieldnames(data);
+
+if ~isempty(params.EndoVar)
+    for i = 1:length(data_names)
+        end_hist.(data_names{i}) = params.EndEndoVar;
+    end
+end
+
 
 % Si las variables tienen una fecha final mayor al fin de su historia y no
 % se especifica las variables a anclar, utiliza estas para anclar. --------
@@ -86,6 +106,24 @@ if isempty(params.FixedPredVar)
             data_names ...
         ) ...
     );
+end
+
+% Transformar como variable alrededor de la media si es que se requiere. --
+if params.AroundZero && params.OutSampleEval
+    temp_obsrng = MODEL.DATES.hist_start:MODEL.DATES.hist_end; % Rango observaciones
+    temp_evalrng = MODEL.DATES.hist_end + 1:max(struct2array(end_data)); % Rango de evaluación
+    temp_means = struct(); % Series de tiempo con dos diferentes medias
+    for i = 1:length(data_names)
+        temp_means.(data_names{i}) = tseries();
+        temp_means.(data_names{i})(temp_obsrng) = mean( ...
+            data.(data_names{i})(temp_obsrng) ...
+        );
+        temp_means.(data_names{i})(temp_evalrng) = mean( ...
+            data.(data_names{i})(temp_evalrng) ...
+        );
+        % Recalculando data al rededor de la media
+        data.(data_names{i}) = data.(data_names{i}) - temp_means.(data_names{i});
+    end
 end
 
 % Recorte de información dadas las variables a anclar. --------------------
@@ -118,7 +156,7 @@ end
 % Ouput -------------------------------------------------------------------
 
 MODEL.data = data;
-MODEL.data_mr = data_mr;
+MODEL.data_mr = data_mr * get(MODEL.M, 'xlist');
 MODEL.ylist_data = O;
 
 MODEL.DATES.hist_start = hist_start;
