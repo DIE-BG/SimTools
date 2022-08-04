@@ -41,16 +41,32 @@ function MODEL = read_data_corr(MODEL, varargin)
 
  p = inputParser;
     addParameter(p, 'FixedPredVar', {});
-    addParameter(p, 'HistStart', {});
     addParameter(p, 'EndoVar', {});
+    addParameter(p, 'StartEndoVar', {});
     addParameter(p, 'EndEndoVar', {});
     addParameter(p, 'AroundZero', false);
     addParameter(p, 'OutSampleEval', false);
-parse(p, varargin{:});
+    addParameter(p, 'IsBackcast', false);
+    addParameter(p, 'NoAnch', false);
+    parse(p, varargin{:});
 params = p.Results;
+
+%{
+% PARA PRUEBAS: Son necesarios los pasos previos en la función
+% eval_forecast.m
+params.FixedPredVar = MODEL.ExoVar;
+params.EndoVar = MODEL.EvalVar;
+params.StartEndoVar = MODEL.DATES.hist_start;
+params.EndEndoVar = MODEL.DATES.hist_end;
+params.AroundZero = ~params.AroundSS;
+params.OutSampleEval = true;
+params.IsBackcast = params.IsBackcast;
+params.NoAnch = params.NoAnch;
+%}
 
 % Lectura del archivo de datos. -------------------------------------------
 
+% Verifica si la fuente de datas es un archivo .mat o un .csv
 if strcmp(...
     regexp(MODEL.data_file_name, '\.(\S*)$', 'tokens', 'once'), ...
     'mat' ...
@@ -62,47 +78,47 @@ else
     data = databank.fromCSV(MODEL.data_file_name);
 end
 
-if isempty(params.HistStart)
-hist_start = max( ...
-    structfun(...
-        @(x) x.Range(1), ...
-        data ...
-    ) ...
-);
-else
-    hist_start = params.HistStart;
-end
+% Filtramos las variables de tal modo que queden solo las que pertenencen
+% al modelo.
+data = data * get(MODEL.M, 'xlist');
 
-% Fecha histórica final. Se especifica en el csv con los datos. -----------
+% Fecha históricas en los datos. Se especifican en el csv con los datos. -----------
+start_hist = structfun(@(x) x.Range(1), data, 'UniformOutput', false);
+
 end_hist = structfun(@(x) x.userdata.endhist, data, 'UniformOutput', false);
 end_hist = structfun(@(x) str2dat(x), end_hist, 'UniformOutput',false);
 
+% Límites de fechas en el archivo original de datos. ----------------------
+start_data = structfun(@(x) x.Range(1), data, 'UniformOutput', false);
 end_data = structfun(@(x) x.Range(end), data, 'UniformOutput', false);
 
 % Se agrega un filtro para las variables que no se anclarán.
 
-if ~isempty(params.EndoVar)
+if params.NoAnch
+    params.EndoVar = get(MODEL.M, 'xlist');
+    params.FixedPredVar = {};
+end
+
+if ~isempty(params.EndoVar) && ~isempty(params.StartEndoVar)
+    for i = 1:length(params.EndoVar)
+        start_hist.(params.EndoVar{i}) = params.StartEndoVar;
+    end
+end
+
+if ~isempty(params.EndoVar) && ~isempty(params.EndEndoVar)
     for i = 1:length(params.EndoVar)
         end_hist.(params.EndoVar{i}) = params.EndEndoVar;
-        end_data.(params.EndoVar{i}) = params.EndEndoVar;
     end
 end
 
+% Si las variables tienen una fecha incial mayor a la que se encuentra en
+% los datos, o si tiene una fecha final menor que en los datos, se
+% espcifica que es una de las variables a anclar. -------------------------
 data_names = fieldnames(data);
-
-if ~isempty(params.EndoVar)
-    for i = 1:length(data_names)
-        end_hist.(data_names{i}) = params.EndEndoVar;
-    end
-end
-
-
-% Si las variables tienen una fecha final mayor al fin de su historia y no
-% se especifica las variables a anclar, utiliza estas para anclar. --------
 if isempty(params.FixedPredVar)
     params.FixedPredVar = data_names( ...
         cellfun( ...
-            @(x) end_data.(x) > end_hist.(x), ...
+            @(x) start_data.(x) < start_hist.(x) || end_data.(x) > end_hist.(x), ...
             data_names ...
         ) ...
     );
@@ -110,8 +126,13 @@ end
 
 % Transformar como variable alrededor de la media si es que se requiere. --
 if params.AroundZero && params.OutSampleEval
-    temp_obsrng = MODEL.DATES.hist_start:MODEL.DATES.hist_end; % Rango observaciones
-    temp_evalrng = MODEL.DATES.hist_end + 1:max(struct2array(end_data)); % Rango de evaluación
+    temp_obsrng = params.StartEndoVar:params.EndEndoVar; % Rango observaciones
+    if params.IsBackcast
+        temp_evalrng = min(struct2array(start_data)):params.StartEndoVar - 1;
+    else
+        temp_evalrng = params.EndEndoVar + 1:max(struct2array(end_data)); % Rango de evaluación
+    end
+    
     temp_means = struct(); % Series de tiempo con dos diferentes medias
     for i = 1:length(data_names)
         temp_means.(data_names{i}) = tseries();
@@ -130,13 +151,16 @@ end
 
 data_mr = data;
 
+% Si se especifica que no hay anclajes, data_mr no conserva ningún datos
+% fuera de la historia para todas la variables.
+
 for i = 1:length(data_names)
     if any(strcmp(data_names{i}, params.FixedPredVar))
         data_mr.(data_names{i}) = data.(data_names{i});
     else
         data_mr.(data_names{i}) = resize( ...
             data.(data_names{i}), ...
-            hist_start:end_hist.(data_names{i}) ...
+            start_hist.(data_names{i}):end_hist.(data_names{i}) ...
         );
     end
 end
@@ -156,10 +180,10 @@ end
 % Ouput -------------------------------------------------------------------
 
 MODEL.data = data;
-MODEL.data_mr = data_mr * get(MODEL.M, 'xlist');
+MODEL.data_mr = data_mr;
 MODEL.ylist_data = O;
 
-MODEL.DATES.hist_start = hist_start;
+MODEL.DATES.hist_start = params.StartEndoVar;
 MODEL.END_HIST = end_hist;
 MODEL.FixedPredVar = params.FixedPredVar;
 

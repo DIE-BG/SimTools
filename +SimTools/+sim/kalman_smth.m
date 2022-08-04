@@ -1,4 +1,4 @@
-function MODEL = kalman_smth(MODEL)
+function MODEL = kalman_smth(MODEL, varargin)
 
 % kalman_smth  utiliza la estructural del modelo en `MODEL.M`, los datos
 % para las variables de medida en `MODEL.ylist_data` y las fechas
@@ -33,11 +33,27 @@ suavizado.
 % -DIE
 % -Octubre 2021
 
+if isstruct(MODEL.DATES.hist_start)
+    temp_hist_start = max(struct2array(MODEL.DATES.hist_start));
+    temp_hist_end = MODEL.DATES.hist_end;
+elseif isstruct(MODEL.DATES.hist_end)
+    temp_hist_start = MODEL.DATES.hist_start;
+    temp_hist_end = min(struct2array(MODEL.DATES.hist_end));
+else
+    temp_hist_start = MODEL.DATES.hist_start;
+    temp_hist_end = MODEL.DATES.hist_end;
+end
+
+p = inputParser;
+    addParameter(p, 'FilterRange', temp_hist_start:temp_hist_end);
+parse(p, varargin{:});
+params = p.Results; 
+
 
 [MF,F] = filter( ...
     MODEL.M, ...
     MODEL.ylist_data, ...
-    MODEL.DATES.hist_start:MODEL.DATES.hist_end, ...
+    params.FilterRange, ...
     'meanOnly=',true ...
 );
 
