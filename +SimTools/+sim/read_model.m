@@ -21,9 +21,13 @@ function MODEL = read_model(MODEL, varargin)
 % * ParamAssignValue = [] [ `double` ] - Valores de los parámetros a
 % modificar definidos anteriormente.
 %
-% * ParamExtraAssign = [] [ cell ] - Condiciones adicionales que deben ser
+% * ParamExtraAssign = {} [ cell ] - Condiciones adicionales que deben ser
 % reevaluadas dada la estructura del readmodel.m. Se definen como strings
 % dentro del cell.
+%
+% * AroundZero = false [bool] - Sirve para identificar si es un modelo al
+% rededor de cero o al rededor de un estados estacionario diferente de
+% cero.
 %
 % ## Output Arguments ##
 %
@@ -38,7 +42,7 @@ function MODEL = read_model(MODEL, varargin)
 %}
 
 % -DIE
-% -Octubre 2021
+% -Agosto 2022
 
 p = inputParser;
     addParameter(p, 'ParamAssignName', {});
