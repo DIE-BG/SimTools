@@ -48,6 +48,7 @@ function MODEL = read_data_corr(MODEL, varargin)
     addParameter(p, 'OutSampleEval', false);
     addParameter(p, 'IsBackcast', false);
     addParameter(p, 'NoAnch', false);
+    addParameter(p, 'PredEnd', {});
     parse(p, varargin{:});
 params = p.Results;
 
@@ -62,6 +63,7 @@ params.AroundZero = ~params.AroundSS;
 params.OutSampleEval = true;
 params.IsBackcast = params.IsBackcast;
 params.NoAnch = params.NoAnch;
+params.PredEnd = MODEL.DATES.pred_end;
 %}
 
 % Lectura del archivo de datos. -------------------------------------------
@@ -82,12 +84,19 @@ end
 % al modelo.
 data = data * get(MODEL.M, 'xlist');
 
+if params.IsBackcast && (params.PredEnd < min(structfun(@(x) x.range(end), data)))
+    data = dbclip(data, params.StartEndoVar:params.PredEnd);
+end
+
 % Fecha históricas en los datos. Se especifican en el csv con los datos. -----------
 start_hist = structfun(@(x) x.Range(1), data, 'UniformOutput', false);
 
 end_hist = structfun(@(x) x.userdata.endhist, data, 'UniformOutput', false);
 end_hist = structfun(@(x) str2dat(x), end_hist, 'UniformOutput',false);
 
+if params.IsBackcast
+    end_hist = structfun(@(x) params.EndEndoVar, data, 'UniformOutput',false);
+end
 % Límites de fechas en el archivo original de datos. ----------------------
 start_data = structfun(@(x) x.Range(1), data, 'UniformOutput', false);
 end_data = structfun(@(x) x.Range(end), data, 'UniformOutput', false);
