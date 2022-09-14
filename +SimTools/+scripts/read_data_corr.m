@@ -137,7 +137,7 @@ end
 if params.AroundZero && params.OutSampleEval
     temp_obsrng = params.StartEndoVar:params.EndEndoVar; % Rango observaciones
     if params.IsBackcast
-        temp_evalrng = min(struct2array(start_data)):params.StartEndoVar - 1;
+        temp_evalrng = params.StartEndoVar + 1:MODEL.DATES.pred_end;
     else
         temp_evalrng = params.EndEndoVar + 1:max(struct2array(end_data)); % Rango de evaluación
     end
