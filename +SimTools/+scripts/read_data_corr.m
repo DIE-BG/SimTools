@@ -83,8 +83,11 @@ end
 % Filtramos las variables de tal modo que queden solo las que pertenencen
 % al modelo.
 data = data * get(MODEL.M, 'xlist');
-
-if params.IsBackcast && (params.PredEnd < min(structfun(@(x) x.range(end), data)))
+% 
+% if params.IsBackcast && (params.PredEnd < min(structfun(@(x) x.range(end), data)))
+%     data = dbclip(data, params.StartEndoVar:params.PredEnd);
+% end
+if params.PredEnd < min(structfun(@(x) x.range(end), data))
     data = dbclip(data, params.StartEndoVar:params.PredEnd);
 end
 
