@@ -113,7 +113,7 @@ exoShocks = regexp(get(MODEL.MF, 'elist')', '.*exo.*', 'match');
 exoShocks = exoShocks(cellfun(@(x) ~isempty(x), exoShocks));
 exoShocks = cellfun(@(x) x{1}, exoShocks, 'UniformOutput', false);
 
-
+var_plot = params.Variables - measurementShocks;
 % Se filtran la variables de medida del plot.
 if params.MeasurementShocks
     var_plot = params.Variables;

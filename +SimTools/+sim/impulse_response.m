@@ -35,11 +35,12 @@ function MODEL = impulse_response(MODEL, varargin)
 
 p = inputParser;
     addParameter(p, 'FromSState', true);
+    addParameter(p, 'LengthSim', 50);
 parse(p, varargin{:});
 params = p.Results; 
 
 startSim = 1;
-endSim = MODEL.DATES.pred_end - MODEL.DATES.pred_start;
+endSim = params.LengthSim;
 
 temp_sname = get(MODEL.M, 'elist');
 
