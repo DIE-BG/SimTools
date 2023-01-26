@@ -60,12 +60,12 @@ if ~(length(params.ParamAssignName) == length(params.ParamAssignValue))
 end
 
 % Asignación de parámetros a la estructura `s`. ---------------------------
-
+temp_pwd = pwd;
 if params.AroundZero
-    run(MODEL.param_file_name_nm);
+    run(temp_pwd, MODEL.param_file_name_nm);
     disp('Parametrización al rededor de cero.')
 else
-    run(MODEL.param_file_name);
+    run(fullfile(temp_pwd,MODEL.param_file_name));
     disp('Parametrización al rededor de SS.')
 end
 
