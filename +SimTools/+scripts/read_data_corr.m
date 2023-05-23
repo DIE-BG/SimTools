@@ -55,15 +55,15 @@ params = p.Results;
 %{
 % PARA PRUEBAS: Son necesarios los pasos previos en la función
 % eval_forecast.m
-params.FixedPredVar = MODEL.ExoVar;
-params.EndoVar = MODEL.EvalVar;
-params.StartEndoVar = MODEL.DATES.hist_start;
-params.EndEndoVar = MODEL.DATES.hist_end;
-params.AroundZero = ~params.AroundSS;
-params.OutSampleEval = ~params.InSample;
-params.IsBackcast = params.IsBackcast;
-params.NoAnch = params.NoAnch;
-params.PredEnd = MODEL.DATES.pred_end;
+params.FixedPredVar = MODEL.ExoVar
+params.EndoVar = MODEL.EvalVar
+params.StartEndoVar = MODEL.DATES.hist_start
+params.EndEndoVar = MODEL.DATES.hist_end
+params.AroundZero = ~params.AroundSS
+params.OutSampleEval = ~params.InSample
+params.IsBackcast = params.IsBackcast
+params.NoAnch = params.NoAnch
+params.PredEnd = MODEL.DATES.pred_end
 %}
 
 % Lectura del archivo de datos. -------------------------------------------
