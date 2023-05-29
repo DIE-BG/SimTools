@@ -77,9 +77,9 @@ var_plot = params.Variables;
 var_shd = get(MODEL.MF, 'elist');
 
 % Paleta de colores
-col = distinguishable_colors(length(var_shd) + 1, ...
+col = SimTools.from_stack_exchange.distinguishable_colors(length(var_shd) + 1, ...
     'b', ...
-    @(x) colorspace('RGB->Lab',x));
+    @(x) SimTools.from_stack_exchange.colorspace('RGB->Lab',x));
 
 % Estados estacionarios
 MFSS = get(MODEL.M, 'sstate');

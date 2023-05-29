@@ -83,9 +83,9 @@ var_plot = params.Variables;
 % Choques a las variables
 
 % Paleta de colores
-col = distinguishable_colors(length(var_plot) + 1, ...
+col = SimTools.from_stack_exchange.distinguishable_colors(length(var_plot) + 1, ...
     'b', ...
-    @(x) colorspace('RGB->Lab',x));
+    @(x) SimTools.from_stack_exchange.colorspace('RGB->Lab',x));
 
 
 % ----- Obtener la fecha máxima de anclajes -----
