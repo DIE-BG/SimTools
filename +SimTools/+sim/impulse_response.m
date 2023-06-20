@@ -36,6 +36,7 @@ function MODEL = impulse_response(MODEL, varargin)
 p = inputParser;
     addParameter(p, 'FromSState', true);
     addParameter(p, 'LengthSim', 50);
+    addParameter(p, 'SizeShock', 1);
 parse(p, varargin{:});
 params = p.Results; 
 
@@ -51,8 +52,13 @@ SIM = sstatedb(MODEL.M, startSim-4:endSim);
     for shock = 1:length(temp_sname)
         % Inicializamos la estructura de datos para la simulación.
         IMPULSE_RESPONSE.(temp_sname{shock}).sim = SIM;
-        % Imponemos un choque de 1% en la variable especificada.
-        IMPULSE_RESPONSE.(temp_sname{shock}).sim.(temp_sname{shock})(startSim) = 1;
+        % Imponemos un choque de SizeShock en la variable especificada.
+        
+        if length(params.SizeShock) == 1
+            IMPULSE_RESPONSE.(temp_sname{shock}).sim.(temp_sname{shock})(startSim) = params.SizeShock;
+        elseif length(params.SizeShock) > 1
+            IMPULSE_RESPONSE.(temp_sname{shock}).sim.(temp_sname{shock})(startSim) = params.SizeShock(shock);
+        end
         % Simulamos el efecto que tiene el choque anterior en el resto de
         % variables, dada la estructura del modelo.
         IMPULSE_RESPONSE.(temp_sname{shock}).sim_r = simulate(MODEL.M, ...
