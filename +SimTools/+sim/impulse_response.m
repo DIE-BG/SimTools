@@ -47,7 +47,7 @@ temp_sname = get(MODEL.M, 'elist');
 
 %Base de datos con estados estacionarios del modelo original (g)
 
-SIM = sstatedb(MODEL.M, startSim-4:endSim);
+SIM = sstatedb(MODEL.M, startSim-8:endSim);
 
     for shock = 1:length(temp_sname)
         % Inicializamos la estructura de datos para la simulación.
