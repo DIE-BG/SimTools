@@ -44,6 +44,9 @@ function plot_var_dsc(MODEL, varargin)
     addParameter(p, 'Rel', true);
     addParameter(p, 'SavePath', fullfile(userpath, 'temp'));
     addParameter(p, 'Variables', get(MODEL.M, 'xlist'))
+    addParameter(p, 'VariableNames', MODEL.FullListNames)
+    addParameter(p, 'VariableD', MODEL.listVar)
+    addParameter(p, 'ShockNames', MODEL.FullListNames-MODEL.NoShockNames)
 parse(p, varargin{:});
 params = p.Results; 
 
@@ -57,11 +60,13 @@ end
 
 % Variables a descomponer
 var_dsc_plot = params.Variables;
+var_dsc_names = params.VariableNames;
+var_shock_names = params.ShockNames; 
 % Número de shocks que componen las barras
 nSVar = length(MODEL.var_dsc.s_name);
 
 % Paleta de colores
-col = distinguishable_colors(nSVar,'b',@(x) colorspace('RGB->Lab',x));
+col = SimTools.from_stack_exchange.distinguishable_colors(nSVar,'b',@(x) SimTools.from_stack_exchange.colorspace('RGB->Lab',x));
 
 for i = 1:length(var_dsc_plot)
     
@@ -80,9 +85,10 @@ for i = 1:length(var_dsc_plot)
         'evenlySpread=', false);
     
     % Construcción de los nombres de las variables para las leyendas
-    leg = cellfun(@(x) regexp(x, '(?<=<--s_)(\D*)$', 'match', 'once'), ...
-        MODEL.var_dsc.rel.(var_dsc_plot{i}).comment, ...
-        'UniformOutput',false);
+%     leg = cellfun(@(x) regexp(x, '(?<=<--s_)(\D*)$', 'match', 'once'), ...
+%         MODEL.var_dsc.rel.(var_dsc_plot{i}).comment, ...
+%         'UniformOutput',false);
+    leg = var_shock_names;
     legend(leg, ...
         'Interpreter','none', ...
         'Location','bestoutside')
@@ -92,10 +98,10 @@ for i = 1:length(var_dsc_plot)
     % Condiciones para los límites en y, título
     if params.Rel
         ylim([0, 1])
-        title(sprintf("Descomposición de Varianza Relativa \n Pronósticos de la variable %s", var_dsc_plot{i}), ...
+        title(sprintf("Descomposición de Varianza Relativa \n %s", params.VariableD{i}), ...
             'Interpreter', 'none')
     else
-        title(sprintf("Descomposición de Varianza Absoluta \n Pronósticos de la variable %s", var_dsc_plot{i}), ...
+        title(sprintf("Descomposición de Varianza Absoluta \n %s", params.VariableD{i}), ...
             'Interpreter', 'none')
     end
     
