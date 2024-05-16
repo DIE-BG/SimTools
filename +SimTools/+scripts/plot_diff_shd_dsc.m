@@ -44,6 +44,7 @@ function plot_diff_shd_dsc(MODEL, varargin)
     addParameter(p, 'Variables', get(MODEL.MF, 'xlist'));
     addParameter(p, 'CloseAll', true);
     addParameter(p, 'OnlyHist', false);
+    addParameter(p, 'Rng', MODEL.DATES.hist_start:MODEL.DATES.pred_end)
 parse(p, varargin{:});
 params = p.Results; 
 
@@ -59,6 +60,12 @@ if params.OnlyHist
    MODEL.shd_dsc = dbclip(MODEL.shd_dsc, MODEL.DATES.hist_start:MODEL.DATES.hist_end);
    MODEL.diff_shd_dsc = dbclip(MODEL.diff_shd_dsc, MODEL.DATES.hist_start:MODEL.DATES.hist_end);
    MODEL.F_pred = dbclip(MODEL.F_pred, MODEL.DATES.hist_start:MODEL.DATES.hist_end);
+   
+elseif ~params.OnlyHist && ~isempty(params.Rng)
+   MODEL.shd_dsc = dbclip(MODEL.shd_dsc, MODEL.DATES.hist_end - 20:MODEL.DATES.hist_end + 20);
+   MODEL.diff_shd_dsc = dbclip(MODEL.diff_shd_dsc, MODEL.DATES.hist_end - 20:MODEL.DATES.hist_end + 20);
+   MODEL.F_pred = dbclip(MODEL.F_pred, MODEL.DATES.hist_end - 20:MODEL.DATES.hist_end + 20);
+   
 end
 
 
